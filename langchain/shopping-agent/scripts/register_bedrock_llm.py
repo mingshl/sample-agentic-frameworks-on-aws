@@ -4,7 +4,7 @@ Register and deploy Amazon Bedrock Claude model to OpenSearch for agentic memory
 
 This script:
 1. Creates a Bedrock connector in OpenSearch
-2. Registers the Claude 4.5 Haiku model
+2. Registers the Claude 3.5 Haiku model
 3. Deploys the model for use
 4. Tests the model deployment
 5. Outputs the model ID for use in .env
@@ -12,7 +12,7 @@ This script:
 Prerequisites:
 - AWS credentials with Bedrock access in .env
 - OpenSearch running and accessible
-- Bedrock Claude 4.5 Haiku enabled in us-west-2
+- Bedrock Claude 3.5 Haiku enabled in us-west-2
 
 Reference: https://docs.opensearch.org/latest/ml-commons-plugin/remote-models/bedrock/
 """
@@ -48,17 +48,17 @@ def create_bedrock_connector(client, region: str, access_key: str, secret_key: s
     """
     print("Step 1: Creating Bedrock connector...")
     print(f"  Region: {region}")
-    print(f"  Model: Claude 4.5 Haiku (anthropic.claude-4-5-haiku-20250514-v1:0)")
+    print(f"  Model: Claude 3.5 Haiku (anthropic.claude-3-5-haiku-20241022-v1:0)")
 
     connector_body = {
-        "name": "Amazon Bedrock Claude 4.5 Haiku Connector",
-        "description": "Connector for Amazon Bedrock Claude 4.5 Haiku for agentic memory processing",
+        "name": "Amazon Bedrock Claude 3.5 Haiku Connector",
+        "description": "Connector for Amazon Bedrock Claude 3.5 Haiku for agentic memory processing",
         "version": "1.0",
         "protocol": "aws_sigv4",
         "parameters": {
             "region": region,
             "service_name": "bedrock",
-            "model": "anthropic.claude-4-5-haiku-20250514-v1:0",
+            "model": "us.anthropic.claude-3-5-haiku-20241022-v1:0",
             "anthropic_version": "bedrock-2023-05-31"
         },
         "credential": {
@@ -69,7 +69,7 @@ def create_bedrock_connector(client, region: str, access_key: str, secret_key: s
             {
                 "action_type": "predict",
                 "method": "POST",
-                "url": f"https://bedrock-runtime.{region}.amazonaws.com/model/anthropic.claude-4-5-haiku-20250514-v1:0/invoke",
+                "url": f"https://bedrock-runtime.{region}.amazonaws.com/model/us.anthropic.claude-3-5-haiku-20241022-v1:0/invoke",
                 "headers": {
                     "content-type": "application/json",
                     "x-amz-content-sha256": "required"
@@ -85,7 +85,7 @@ def create_bedrock_connector(client, region: str, access_key: str, secret_key: s
                     ]
                 }""",
                 "pre_process_function": "\n    StringBuilder builder = new StringBuilder();\n    builder.append(\"\\\"\");\n    String first = params.text;\n    builder.append(first);\n    builder.append(\"\\\"\");\n    def parameters = \"{\" +\"\\\"prompt\\\":\" + builder + \"}\";\n    return  \"{\" +\"\\\"parameters\\\":\" + parameters + \"}\";",
-                "post_process_function": "\n      def dataType = \"text/docs\";\n      def dataArray = [];\n      if (params.content != null && params.content.size() > 0) {\n        for (item in params.content) {\n          if (item.type == \"text\") {\n            def output = item.text;\n            dataArray.add(output);\n          }\n        }\n      }\n      return dataArray;"
+                "post_process_function": "\n      def dataType = \"text/docs\";\n      def dataArray = [];\n      if (params.content != null && params.content.size() > 0) {\n        for (item in params.content) {\n          if (item.type == \"text\") {\n            def output = item.text;\n            dataArray.add(output);\n          }\n        }\n      }\n      if (dataArray.size() > 0) {\n        return dataArray.get(0);\n      }\n      return \"\";"
             }
         ]
     }
@@ -130,9 +130,9 @@ def register_model(client, connector_id: str):
     print("\nStep 2: Registering Bedrock model...")
 
     register_body = {
-        "name": "Bedrock Claude 4.5 Haiku",
+        "name": "Bedrock Claude 3.5 Haiku",
         "function_name": "remote",
-        "description": "Claude 4.5 Haiku via Amazon Bedrock for agentic memory processing and summarization",
+        "description": "Claude 3.5 Haiku via Amazon Bedrock for agentic memory processing and summarization",
         "connector_id": connector_id
     }
 
@@ -352,7 +352,7 @@ def test_model(client, model_id: str):
 def main():
     """Main setup function."""
     print("=" * 70)
-    print("Amazon Bedrock Claude 4.5 Haiku - OpenSearch Registration")
+    print("Amazon Bedrock Claude 3.5 Haiku - OpenSearch Registration")
     print("=" * 70)
     print()
 
@@ -373,14 +373,14 @@ def main():
         print()
         print("Make sure your AWS account has:")
         print("  ✓ Amazon Bedrock access enabled")
-        print("  ✓ Claude 4.5 Haiku model access in us-west-2")
+        print("  ✓ Claude 3.5 Haiku model access in us-west-2")
         print("  ✓ Permissions: bedrock:InvokeModel")
         sys.exit(1)
 
     print(f"Configuration:")
     print(f"  AWS Region: {region}")
     print(f"  Access Key: {access_key[:10]}...")
-    print(f"  Model: Claude 4.5 Haiku (anthropic.claude-4-5-haiku-20250514-v1:0)")
+    print(f"  Model: Claude 3.5 Haiku (anthropic.claude-3-5-haiku-20241022-v1:0)")
     print()
 
     # Get OpenSearch client
@@ -419,7 +419,7 @@ def main():
 
         # Success!
         print("\n" + "=" * 70)
-        print("✓ Bedrock Claude 4.5 Haiku setup complete!")
+        print("✓ Bedrock Claude 3.5 Haiku setup complete!")
         print("=" * 70)
         print()
         print("Next steps:")
@@ -439,7 +439,7 @@ def main():
         print()
         print("Troubleshooting:")
         print("• Verify AWS credentials have Bedrock access")
-        print("• Check Claude 4.5 Haiku is enabled in your AWS account")
+        print("• Check Claude 3.5 Haiku is enabled in your AWS account")
         print("• Ensure us-west-2 region has Bedrock service available")
         print("• Check OpenSearch cluster has sufficient resources")
         sys.exit(1)
